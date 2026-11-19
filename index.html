@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aplikasi Kasir Faresi</title>
+<style>
+:root{--navy:#142b52;--blue:#2457a7;--bg:#f3f6fb;--ink:#172033;--muted:#6b7280;--line:#e5eaf2;--green:#16865b;--red:#c0392b}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}
+button,input{font:inherit}button{cursor:pointer;border:0;border-radius:9px;padding:11px 16px;background:var(--blue);color:white;font-weight:700}
+button.secondary{background:#e8eef8;color:var(--navy)}button.danger{background:#b93838}button:disabled{opacity:.45;cursor:not-allowed}
+.login-wrap{min-height:100vh;display:grid;place-items:center;padding:20px;background:linear-gradient(135deg,#142b52,#2d66b5)}
+.login-card{background:white;width:min(420px,100%);padding:32px;border-radius:18px;box-shadow:0 18px 55px #071a3844}
+.logo{width:58px;height:58px;border-radius:16px;background:var(--navy);color:white;display:grid;place-items:center;font-size:24px;font-weight:800;margin-bottom:16px}
+h1{font-size:25px;margin:0 0 8px}p.sub{color:var(--muted);margin:0 0 24px;line-height:1.5}
+label{display:block;font-size:13px;font-weight:700;margin:14px 0 7px}
+input{width:100%;padding:12px;border:1px solid #cfd7e4;border-radius:9px;outline:none;background:white}
+input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #2457a71c}
+.full{width:100%;margin-top:20px}.hint{font-size:12px;color:var(--muted);line-height:1.6;margin-top:18px}
+.error{color:var(--red);font-size:13px;min-height:18px;margin-top:10px}
+#app{display:none}.topbar{background:var(--navy);color:white;padding:17px 24px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{font-size:19px;font-weight:800}.brand small{display:block;font-size:11px;font-weight:400;opacity:.75;margin-top:4px}
+.top-actions{display:flex;align-items:center;gap:12px;font-size:13px}.top-actions button{background:#ffffff20}
+.container{max-width:1200px;margin:25px auto;padding:0 18px}
+.welcome{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+.welcome h2{margin:0 0 5px}.welcome p{margin:0;color:var(--muted);font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.stat,.panel{background:white;border:1px solid var(--line);border-radius:14px;padding:18px}
+.stat span{color:var(--muted);font-size:13px}.stat strong{display:block;font-size:23px;margin-top:8px}
+.layout{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;align-items:start}
+.panel h3{margin:0 0 16px;font-size:17px}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.formgrid .wide{grid-column:1/-1}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:11px 8px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--muted);font-weight:700}
+.total{display:flex;justify-content:space-between;padding:9px 0;font-size:14px}.total.big{font-size:19px;font-weight:800;border-top:1px solid var(--line);margin-top:8px;padding-top:15px}
+.paybox{margin-top:15px}.paybox input{margin:7px 0 10px}.change{font-weight:800;color:var(--green);margin:8px 0}
+.empty{text-align:center;color:var(--muted);padding:22px}
+.notice{font-size:12px;color:var(--muted);line-height:1.5;margin-top:18px}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:1fr}.topbar{padding:15px}.container{margin:18px auto}}
+@media print{body{background:white}.topbar,.welcome,.stats,.layout,.no-print{display:none!important}#receiptPrint{display:block!important}.receipt{width:75mm;margin:0 auto;color:#000;font:12px monospace}.receipt h2{text-align:center;font-size:17px}.receipt .center{text-align:center}.receipt table{font:11px monospace}.receipt td,.receipt th{padding:5px 1px;border-bottom:1px dashed #aaa}.receipt .line{border-top:1px dashed #000;margin:8px 0}}
+#receiptPrint{display:none}
+</style>
+</head>
+<body>
+<section class="login-wrap" id="loginScreen">
+ <div class="login-card">
+  <div class="logo">KF</div><h1>Aplikasi Kasir Faresi</h1>
+  <p class="sub">Silakan masuk untuk menggunakan sistem penjualan.</p>
+  <form id="loginForm">
+   <label for="username">Nama pengguna</label><input id="username" autocomplete="username" required placeholder="Masukkan nama pengguna">
+   <label for="password">Kata sandi</label><input id="password" type="password" autocomplete="current-password" required placeholder="Masukkan kata sandi">
+   <div class="error" id="loginError"></div><button class="full" type="submit">Masuk</button>
+  </form>
+  <div class="hint"><b>Akun demo:</b><br>Admin: <b>admin</b> / <b>admin123</b><br>Kasir: <b>kasir</b> / <b>kasir123</b></div>
+ </div>
+</section>
+
+<div id="app">
+<header class="topbar"><div class="brand">APLIKASI KASIR FARESI<small>Sistem Penjualan Sederhana</small></div><div class="top-actions"><span id="userLabel"></span><button onclick="logout()">Keluar</button></div></header>
+<main class="container">
+ <div class="welcome"><div><h2>Dashboard Kasir</h2><p>Kelola barang, hitung pembayaran, dan cetak struk.</p></div><button class="secondary" onclick="clearCart()">Kosongkan keranjang</button></div>
+ <div class="stats">
+  <div class="stat"><span>Jumlah barang di keranjang</span><strong id="statItems">0</strong></div>
+  <div class="stat"><span>Total belanja</span><strong id="statTotal">Rp0</strong></div>
+  <div class="stat"><span>Pengguna aktif</span><strong id="statUser">-</strong></div>
+ </div>
+ <div class="layout">
+  <section class="panel">
+   <h3>Tambah Barang</h3>
+   <form id="itemForm" class="formgrid">
+    <div class="wide"><label for="itemName">Nama barang</label><input id="itemName" required placeholder="Contoh: Buku tulis"></div>
+    <div><label for="itemPrice">Harga (Rp)</label><input id="itemPrice" type="number" min="1" step="1" required placeholder="10000"></div>
+    <div><label for="itemQty">Jumlah</label><input id="itemQty" type="number" min="1" step="1" value="1" required></div>
+    <div class="wide"><button type="submit">+ Tambahkan ke keranjang</button></div>
+   </form>
+   <h3 style="margin-top:28px">Daftar Belanja</h3>
+   <div class="table-wrap"><table><thead><tr><th>Barang</th><th>Harga</th><th>Qty</th><th>Subtotal</th><th></th></tr></thead><tbody id="cartBody"><tr><td colspan="5" class="empty">Belum ada barang.</td></tr></tbody></table></div>
+  </section>
+  <section class="panel">
+   <h3>Pembayaran</h3>
+   <div class="total"><span>Total belanja</span><b id="totalText">Rp0</b></div>
+   <div class="paybox"><label for="paid">Uang dibayar (Rp)</label><input id="paid" type="number" min="0" step="1" placeholder="Masukkan uang pembayaran" oninput="updateChange()">
+    <div class="total"><span>Kembalian</span><b class="change" id="changeText">Rp0</b></div>
+    <div class="actions"><button onclick="finishSale()">Selesaikan & Cetak Struk</button><button class="secondary" onclick="resetPayment()">Reset</button></div>
+   </div>
+   <p class="notice">Catatan: data keranjang tersimpan sementara di browser perangkat ini. Versi GitHub Pages ini belum memakai database online bersama.</p>
+  </section>
+ </div>
+</main>
+</div>
+<div id="receiptPrint"></div>
+<script>
+const accounts={admin:{password:"admin123",role:"Admin"},kasir:{password:"kasir123",role:"Kasir"}};
+let currentUser="",cart=[];
+const rupiah=n=>"Rp"+Number(n||0).toLocaleString("id-ID");
+document.getElementById("loginForm").addEventListener("submit",e=>{
+ e.preventDefault();const u=document.getElementById("username").value.trim().toLowerCase(),p=document.getElementById("password").value;
+ if(accounts[u]&&accounts[u].password===p){currentUser=u;document.getElementById("loginError").textContent="";document.getElementById("loginScreen").style.display="none";document.getElementById("app").style.display="block";document.getElementById("userLabel").textContent=accounts[u].role+" • "+u;document.getElementById("statUser").textContent=accounts[u].role;render();}
+ else document.getElementById("loginError").textContent="Nama pengguna atau kata sandi salah.";
+});
+function logout(){cart=[];document.getElementById("app").style.display="none";document.getElementById("loginScreen").style.display="grid";document.getElementById("loginForm").reset();document.getElementById("paid").value="";render();}
+document.getElementById("itemForm").addEventListener("submit",e=>{
+ e.preventDefault();const name=document.getElementById("itemName").value.trim(),price=Number(document.getElementById("itemPrice").value),qty=Number(document.getElementById("itemQty").value);
+ if(!name||price<=0||qty<=0)return;cart.push({name,price,qty});e.target.reset();document.getElementById("itemQty").value=1;render();
+});
+function total(){return cart.reduce((s,x)=>s+x.price*x.qty,0)}
+function render(){
+ const body=document.getElementById("cartBody");body.innerHTML="";
+ if(!cart.length)body.innerHTML='<tr><td colspan="5" class="empty">Belum ada barang.</td></tr>';
+ cart.forEach((x,i)=>{const tr=document.createElement("tr");tr.innerHTML=`<td>${escapeHtml(x.name)}</td><td>${rupiah(x.price)}</td><td>${x.qty}</td><td>${rupiah(x.price*x.qty)}</td><td><button class="danger" style="padding:6px 9px" onclick="removeItem(${i})">Hapus</button></td>`;body.appendChild(tr)});
+ document.getElementById("totalText").textContent=rupiah(total());document.getElementById("statTotal").textContent=rupiah(total());document.getElementById("statItems").textContent=cart.reduce((s,x)=>s+x.qty,0);updateChange();
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function removeItem(i){cart.splice(i,1);render()}
+function clearCart(){cart=[];document.getElementById("paid").value="";render()}
+function updateChange(){const paid=Number(document.getElementById("paid").value||0),change=paid-total();document.getElementById("changeText").textContent=rupiah(Math.max(0,change));document.getElementById("changeText").style.color=change<0?"#c0392b":"#16865b"}
+function resetPayment(){document.getElementById("paid").value="";updateChange()}
+function finishSale(){
+ if(!cart.length){alert("Keranjang masih kosong.");return}
+ const paid=Number(document.getElementById("paid").value||0),sum=total();
+ if(paid<sum){alert("Uang pembayaran masih kurang.");return}
+ const now=new Date(),date=now.toLocaleString("id-ID");
+ let rows=cart.map(x=>`<tr><td>${escapeHtml(x.name)}<br>${x.qty} x ${rupiah(x.price)}</td><td style="text-align:right">${rupiah(x.qty*x.price)}</td></tr>`).join("");
+ document.getElementById("receiptPrint").innerHTML=`<div class="receipt"><h2>APLIKASI KASIR FARESI</h2><div class="center">Struk Pembelian</div><div class="line"></div><div>Tanggal: ${date}<br>Kasir: ${escapeHtml(currentUser)}</div><div class="line"></div><table>${rows}</table><div class="line"></div><table><tr><td>Total</td><td style="text-align:right">${rupiah(sum)}</td></tr><tr><td>Bayar</td><td style="text-align:right">${rupiah(paid)}</td></tr><tr><td>Kembalian</td><td style="text-align:right">${rupiah(paid-sum)}</td></tr></table><div class="line"></div><div class="center">Terima kasih telah berbelanja!</div></div>`;
+ window.print();clearCart();
+}
+render();
+</script>
+</body>
+</html>
